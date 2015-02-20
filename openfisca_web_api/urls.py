@@ -95,12 +95,13 @@ def make_router(*routings):
     def router(environ, start_response):
         """Dispatch request to controllers."""
         req = webob.Request(environ)
+        ctx = contexts.Ctx(req)
+        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+
         split_path_info = req.path_info.split('/')
         if split_path_info[0]:
             # When path_info doesn't start with a "/" this is an error or a attack => Reject request.
             # An example of an URL with such a invalid path_info: http://127.0.0.1http%3A//127.0.0.1%3A80/result?...
-            ctx = contexts.Ctx(req)
-            headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
             return wsgihelpers.respond_json(ctx,
                 dict(
                     apiVersion = 1,
@@ -111,19 +112,31 @@ def make_router(*routings):
                     ),
                 headers = headers,
                 )(environ, start_response)
+
         for methods, regex, app, vars in routes:
-            if methods is None or req.method in methods:
-                match = regex.match(req.path_info)
-                if match is not None:
-                    if getattr(req, 'urlvars', None) is None:
-                        req.urlvars = {}
-                    req.urlvars.update(match.groupdict())
-                    req.urlvars.update(vars)
-                    req.script_name += req.path_info[:match.end()]
-                    req.path_info = req.path_info[match.end():]
-                    return app(req.environ, start_response)
-        ctx = contexts.Ctx(req)
-        headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
+            match = regex.match(req.path_info)
+            if match is not None:
+                if methods is not None and req.method not in methods:
+                    return wsgihelpers.respond_json(ctx,
+                        dict(
+                            apiVersion = 1,
+                            error = dict(
+                                code = 405,
+                                message = ctx._(u"You cannot use HTTP {} to access this URL. Use one of {}.")
+                                             .format(req.method, methods),
+                                ),
+                            ),
+                        headers = headers,
+                        )(environ, start_response)
+
+                if getattr(req, 'urlvars', None) is None:
+                    req.urlvars = {}
+                req.urlvars.update(match.groupdict())
+                req.urlvars.update(vars)
+                req.script_name += req.path_info[:match.end()]
+                req.path_info = req.path_info[match.end():]
+                return app(req.environ, start_response)
+
         return wsgihelpers.respond_json(ctx,
             dict(
                 apiVersion = 1,
