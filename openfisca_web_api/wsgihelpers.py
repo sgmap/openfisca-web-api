@@ -40,8 +40,8 @@ N_ = lambda message: message
 
 
 errors_title = {
-    400: N_("Unable to Access"),
-    401: N_("Access Denied"),
+    400: N_("Bad Request"),
+    401: N_("Unauthorized"),
     403: N_("Access Denied"),
     404: N_("Unable to Access"),
     }
