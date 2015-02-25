@@ -1,4 +1,4 @@
---editable git+https://github.com/openfisca/openfisca-core.git#egg=OpenFisca-Core
---editable git+https://github.com/openfisca/openfisca-france.git#egg=OpenFisca-France
---editable git+https://github.com/openfisca/openfisca-parsers.git#egg=OpenFisca-Parsers
+--editable git+https://github.com/openfisca/openfisca-core.git@54f8ee0bb42ddaf913c21fe2ecb941a7b14346c4#egg=OpenFisca-Core
+--editable git+https://github.com/openfisca/openfisca-france.git@5d0332cdb8cbfe5feca7d8f29c806082a67e27de#egg=OpenFisca-France
+--editable git+https://github.com/openfisca/openfisca-parsers.git@3b82cc446e1d644e59bf5c0924177714133871f6#egg=OpenFisca-Parsers
 --editable .
