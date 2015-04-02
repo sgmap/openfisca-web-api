@@ -96,6 +96,11 @@ def respond_json(ctx, data, code = None, headers = [], jsonp = None):
                 for name, value in error.iteritems()
                 if value is not None
                 )
+        if isinstance(error, str):
+            error = data['error'] = dict(
+                message = data['error'],
+                code = 500
+                )
     else:
         error = None
     if jsonp:
