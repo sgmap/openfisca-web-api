@@ -1,28 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-# OpenFisca -- A versatile microsimulation software
-# By: OpenFisca Team <contact@openfisca.fr>
-#
-# Copyright (C) 2011, 2012, 2013, 2014, 2015 OpenFisca Team
-# https://github.com/openfisca
-#
-# This file is part of OpenFisca.
-#
-# OpenFisca is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# OpenFisca is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 """Parameters controller"""
 
 
@@ -121,15 +99,16 @@ def api1_parameters(req):
             parameter_json['description'] = parameter_json_in_cache['description']
             parameters_json.append(parameter_json)
 
+    response_dict = dict(
+        apiVersion = 1,
+        country_package_git_head_sha = environment.country_package_git_head_sha,
+        method = req.script_name,
+        parameters = parameters_json,
+        url = req.url.decode('utf-8'),
+        )
+    if hasattr(tax_benefit_system, 'CURRENCY'):
+        response_dict['currency'] = tax_benefit_system.CURRENCY
     return wsgihelpers.respond_json(ctx,
-        collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
-            country_package_git_head_sha = environment.country_package_git_head_sha,
-            currency = tax_benefit_system.CURRENCY,
-            method = req.script_name,
-            parameters = parameters_json,
-            parameters_file_path = model.parameters_file_path,
-            url = req.url.decode('utf-8'),
-            ).iteritems())),
+        collections.OrderedDict(sorted(response_dict.iteritems())),
         headers = headers,
         )

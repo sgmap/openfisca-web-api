@@ -1,28 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-# OpenFisca -- A versatile microsimulation software
-# By: OpenFisca Team <contact@openfisca.fr>
-#
-# Copyright (C) 2011, 2012, 2013, 2014, 2015 OpenFisca Team
-# https://github.com/openfisca
-#
-# This file is part of OpenFisca.
-#
-# OpenFisca is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# OpenFisca is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 """Conversion functions"""
 
 
@@ -61,31 +39,33 @@ def jsonify_value(value):
     return value
 
 
-def make_str_to_reforms():
+def make_str_list_to_reforms():
     # Defer converter creation for model to load.
     from . import model
 
-    def str_to_reforms(value, state = None):
+    def str_list_to_reforms(value, state = None):
         if value is None:
             return value, None
         if state is None:
             state = default_state
-        if model.build_reform_function_by_key is None:
+        value, error = pipe(
+            empty_to_none,
+            test_isinstance(list),
+            )(value)
+        if value is None or error is not None:
+            return value, error
+        if value and model.build_reform_function_by_key is None:
             return value, state._(u'No reform was declared to the API')
         declared_reforms_key = model.build_reform_function_by_key.keys()
-        return pipe(
-            test_isinstance(list),
-            uniform_sequence(
-                pipe(
-                    test_isinstance(basestring),
-                    empty_to_none,
-                    test_in(declared_reforms_key),
-                    ),
-                drop_none_items = True,
+        return uniform_sequence(
+            pipe(
+                test_isinstance(basestring),
+                empty_to_none,
+                test_in(declared_reforms_key),
                 ),
-            empty_to_none,
+            drop_none_items = True,
             )(value)
-    return str_to_reforms
+    return str_list_to_reforms
 
 
 def module_and_function_names_to_function(values, state = None):

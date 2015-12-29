@@ -1,28 +1,6 @@
 # -*- coding: utf-8 -*-
 
 
-# OpenFisca -- A versatile microsimulation software
-# By: OpenFisca Team <contact@openfisca.fr>
-#
-# Copyright (C) 2011, 2012, 2013, 2014, 2015 OpenFisca Team
-# https://github.com/openfisca
-#
-# This file is part of OpenFisca.
-#
-# OpenFisca is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as
-# published by the Free Software Foundation, either version 3 of the
-# License, or (at your option) any later version.
-#
-# OpenFisca is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 """Calculate controller"""
 
 
@@ -167,7 +145,7 @@ def api1_calculate(req):
             headers = headers,
             )
 
-    str_to_reforms = conv.make_str_to_reforms()
+    str_list_to_reforms = conv.make_str_list_to_reforms()
 
     data, errors = conv.struct(
         dict(
@@ -176,7 +154,7 @@ def api1_calculate(req):
             #     conv.input_to_uuid_str,
             #     conv.not_none,
             #     ),
-            base_reforms = str_to_reforms,
+            base_reforms = str_list_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             intermediate_variables = conv.pipe(
                 conv.test_isinstance((bool, int)),
@@ -193,7 +171,7 @@ def api1_calculate(req):
                 conv.test_in(['test_case', 'variables']),
                 conv.default('test_case'),
                 ),
-            reforms = str_to_reforms,
+            reforms = str_list_to_reforms,
             scenarios = conv.pipe(
                 conv.test_isinstance(list),
                 conv.uniform_sequence(
