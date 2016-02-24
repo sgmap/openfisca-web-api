@@ -8,15 +8,12 @@ from __future__ import division
 
 import collections
 import copy
-import multiprocessing
 import os
 
 from openfisca_core import decompositions
+from openfisca_core.legislations import ParameterNotFound
 
-from .. import conf, contexts, conv, model, wsgihelpers
-
-
-cpu_count = multiprocessing.cpu_count()
+from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
 def N_(message):
@@ -37,7 +34,7 @@ def api1_simulate(req):
             # When load average is not available, always accept request.
             pass
         else:
-            if load_average[0] / cpu_count > 1:
+            if load_average[0] / environment.cpu_count > 1:
                 return wsgihelpers.respond_json(ctx,
                     collections.OrderedDict(sorted(dict(
                         apiVersion = 1,
@@ -93,11 +90,6 @@ def api1_simulate(req):
 
     data, errors = conv.struct(
         dict(
-            # api_key = conv.pipe(  # Shared secret between client and server
-            #     conv.test_isinstance(basestring),
-            #     conv.input_to_uuid_str,
-            #     conv.not_none,
-            #     ),
             base_reforms = str_list_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             reforms = str_list_to_reforms,
@@ -172,29 +164,6 @@ def api1_simulate(req):
             headers = headers,
             )
 
-#    api_key = data['api_key']
-#    account = model.Account.find_one(
-#        dict(
-#            api_key = api_key,
-#            ),
-#        as_class = collections.OrderedDict,
-#        )
-#    if account is None:
-#        return wsgihelpers.respond_json(ctx,
-#            collections.OrderedDict(sorted(dict(
-#                apiVersion = 1,
-#                context = data['context'],
-#                error = collections.OrderedDict(sorted(dict(
-#                    code = 401,  # Unauthorized
-#                    message = ctx._('Unknown API Key: {}').format(api_key),
-#                    ).iteritems())),
-#                method = req.script_name,
-#                params = inputs,
-#                url = req.url.decode('utf-8'),
-#                ).iteritems())),
-#            headers = headers,
-#            )
-
     scenarios = base_scenarios if data['reforms'] is None else reform_scenarios
 
     suggestions = {}
@@ -230,14 +199,49 @@ def api1_simulate(req):
 
     decomposition_json = model.get_cached_or_new_decomposition_json(tax_benefit_system = base_tax_benefit_system)
     base_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in base_scenarios]
-    base_response_json = decompositions.calculate(base_simulations, decomposition_json)
+
+    try:
+        base_response_json = decompositions.calculate(base_simulations, decomposition_json)
+    except ParameterNotFound as exc:
+        return wsgihelpers.respond_json(ctx,
+            collections.OrderedDict(sorted(dict(
+                apiVersion = 1,
+                context = inputs.get('context'),
+                error = collections.OrderedDict(sorted(dict(
+                    code = 500,
+                    errors = [{"scenarios": {exc.simulation_index: exc.to_json()}}],
+                    message = ctx._(u'Internal server error'),
+                    ).iteritems())),
+                method = req.script_name,
+                params = inputs,
+                url = req.url.decode('utf-8'),
+                ).iteritems())),
+            headers = headers,
+            )
 
     if data['reforms'] is not None:
         reform_decomposition_json = model.get_cached_or_new_decomposition_json(
             tax_benefit_system = reform_tax_benefit_system,
             )
         reform_simulations = [scenario.new_simulation(trace = data['trace']) for scenario in reform_scenarios]
-        reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
+        try:
+            reform_response_json = decompositions.calculate(reform_simulations, reform_decomposition_json)
+        except ParameterNotFound as exc:
+            return wsgihelpers.respond_json(ctx,
+                collections.OrderedDict(sorted(dict(
+                    apiVersion = 1,
+                    context = inputs.get('context'),
+                    error = collections.OrderedDict(sorted(dict(
+                        code = 500,
+                        errors = [{"scenarios": {exc.simulation_index: exc.to_json()}}],
+                        message = ctx._(u'Internal server error'),
+                        ).iteritems())),
+                    method = req.script_name,
+                    params = inputs,
+                    url = req.url.decode('utf-8'),
+                    ).iteritems())),
+                headers = headers,
+                )
 
     if data['trace']:
         simulations_variables_json = []

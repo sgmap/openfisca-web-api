@@ -9,7 +9,7 @@ This is the source code of the Web-API module.
 
 Please consult http://doc.openfisca.fr/
 
-## Install
+## Install to develop
 
 Assuming you are in an `openfisca` working directory:
 
@@ -21,7 +21,7 @@ pip install --editable . --user # Microsoft Windows users must not use the `--us
 python setup.py compile_catalog
 ```
 
-## Install in production
+## Deploy in production
 
 Here we use Apache with mod_wsgi under Debian Jessie.
 
@@ -62,6 +62,8 @@ WSGIDaemonProcess api.openfisca.fr display-name=api
 # service apache2 force-reload
 ```
 
+## Test
+
 If you installed OpenFisca-Web-API from Git you can run the unit tests:
 
 ```
@@ -69,6 +71,8 @@ If you installed OpenFisca-Web-API from Git you can run the unit tests:
 cd /path/to/openfisca-web-api
 make test
 ```
+
+Also see [examples](./examples/).
 
 ## Contributing
 

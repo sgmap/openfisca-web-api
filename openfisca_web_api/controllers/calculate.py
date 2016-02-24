@@ -9,28 +9,16 @@ from __future__ import division
 import collections
 import copy
 import itertools
-import multiprocessing
 import os
 import time
 
-from .. import conf, contexts, conv, model, wsgihelpers
+from openfisca_core.legislations import ParameterNotFound
 
-
-cpu_count = multiprocessing.cpu_count()
+from .. import conf, contexts, conv, environment, model, wsgihelpers
 
 
 def N_(message):
     return message
-
-
-def build_and_calculate_simulations(variables_name, scenarios, trace = False):
-    simulations = []
-    for scenario in scenarios:
-        simulation = scenario.new_simulation(trace = trace)
-        for variable_name in variables_name:
-            simulation.calculate_output(variable_name)
-        simulations.append(simulation)
-    return simulations
 
 
 def build_output_variables(simulations, use_label, variables):
@@ -66,10 +54,18 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
             entity_members = test_case[holder.entity.key_plural]
             if isinstance(variable_value_json, dict):
                 for entity_member_index, entity_member in enumerate(entity_members):
-                    entity_member[variable_name] = {
-                        period: array_json[entity_member_index]
-                        for period, array_json in variable_value_json.iteritems()
-                        }
+                    entity_member[variable_name] = {}
+                    for period, array_or_dict_json in variable_value_json.iteritems():
+                            if type(array_or_dict_json) == dict:
+                                if len(array_or_dict_json) == 1:
+                                    entity_member[variable_name][period] = \
+                                        array_or_dict_json[array_or_dict_json.keys()[0]][entity_member_index]
+                                else:
+                                    entity_member[variable_name][period] = {}
+                                    for key, array in array_or_dict_json.iteritems():
+                                        entity_member[variable_name][period][key] = array[entity_member_index]
+                            else:
+                                entity_member[variable_name][period] = array_or_dict_json[entity_member_index]
             else:
                 for entity_member, cell_json in itertools.izip(entity_members, variable_value_json):
                     entity_member[variable_name] = cell_json
@@ -79,6 +75,31 @@ def fill_test_cases_with_values(intermediate_variables, scenarios, simulations, 
 
 @wsgihelpers.wsgify
 def api1_calculate(req):
+    def calculate_simulations(scenarios, variables, trace):
+        simulations = []
+        for scenario_index, scenario in enumerate(scenarios):
+            simulation = scenario.new_simulation(trace = trace)
+            for variable_name in variables:
+                try:
+                    simulation.calculate_output(variable_name)
+                except ParameterNotFound as exc:
+                    raise wsgihelpers.respond_json(ctx,
+                        collections.OrderedDict(sorted(dict(
+                            apiVersion = 1,
+                            context = inputs.get('context'),
+                            error = collections.OrderedDict(sorted(dict(
+                                code = 500,
+                                errors = [{"scenarios": {scenario_index: exc.to_json()}}],
+                                ).iteritems())),
+                            method = req.script_name,
+                            params = inputs,
+                            url = req.url.decode('utf-8'),
+                            ).iteritems())),
+                        headers = headers,
+                        )
+            simulations.append(simulation)
+        return simulations
+
     total_start_time = time.time()
 
     ctx = contexts.Ctx(req)
@@ -93,7 +114,7 @@ def api1_calculate(req):
             # When load average is not available, always accept request.
             pass
         else:
-            if load_average[0] / cpu_count > 1:
+            if load_average[0] / environment.cpu_count > 1:
                 return wsgihelpers.respond_json(ctx,
                     collections.OrderedDict(sorted(dict(
                         apiVersion = 1,
@@ -149,11 +170,6 @@ def api1_calculate(req):
 
     data, errors = conv.struct(
         dict(
-            # api_key = conv.pipe(  # Shared secret between client and server
-            #     conv.test_isinstance(basestring),
-            #     conv.input_to_uuid_str,
-            #     conv.not_none,
-            #     ),
             base_reforms = str_list_to_reforms,
             context = conv.test_isinstance(basestring),  # For asynchronous calls
             intermediate_variables = conv.pipe(
@@ -286,29 +302,6 @@ def api1_calculate(req):
             headers = headers,
             )
 
-#    api_key = data['api_key']
-#    account = model.Account.find_one(
-#        dict(
-#            api_key = api_key,
-#            ),
-#        as_class = collections.OrderedDict,
-#        )
-#    if account is None:
-#        return wsgihelpers.respond_json(ctx,
-#            collections.OrderedDict(sorted(dict(
-#                apiVersion = 1,
-#                context = data['context'],
-#                error = collections.OrderedDict(sorted(dict(
-#                    code = 401,  # Unauthorized
-#                    message = ctx._('Unknown API Key: {}').format(api_key),
-#                    ).iteritems())),
-#                method = req.script_name,
-#                params = inputs,
-#                url = req.url.decode('utf-8'),
-#                ).iteritems())),
-#            headers = headers,
-#            )
-
     scenarios = base_scenarios if data['reforms'] is None else reform_scenarios
 
     suggestions = {}
@@ -352,17 +345,13 @@ def api1_calculate(req):
             )
 
     calculate_simulation_start_time = time.time()
-    base_simulations = build_and_calculate_simulations(
-        scenarios = base_scenarios,
-        trace = data['intermediate_variables'] or data['trace'],
-        variables_name = data['variables'],
-        )
+
+    trace_simulations = data['trace'] or data['intermediate_variables']
+
+    base_simulations = calculate_simulations(scenarios, data['variables'], trace = trace_simulations)
     if data['reforms'] is not None:
-        reform_simulations = build_and_calculate_simulations(
-            scenarios = reform_scenarios,
-            trace = data['intermediate_variables'] or data['trace'],
-            variables_name = data['variables'],
-            )
+        reform_simulations = calculate_simulations(reform_scenarios, data['variables'], trace = trace_simulations)
+
     calculate_simulation_end_time = time.time()
     calculate_simulation_time = calculate_simulation_end_time - calculate_simulation_start_time
 
