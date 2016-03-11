@@ -1,8 +1,12 @@
 # Changelog
 
-## 0.5.2.dev0 - next release
+## 0.5.3.dev0 - next release
 
 * TODO Fill this changes list while developing
+
+## 0.5.2
+
+* Misc updates
 
 ## 0.5.1
 
