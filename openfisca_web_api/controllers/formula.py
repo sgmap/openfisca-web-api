@@ -84,9 +84,11 @@ On a server, just test what your library handles.
         data['values'] = dict()
         data['period'] = parse_period(req.urlvars.get('period'))
 
+        simulation = create_simulation(params, data['period'], tax_benefit_system)
+
         for formula_name in formula_names:
             column = get_column_from_formula_name(formula_name, tax_benefit_system)
-            data['values'][formula_name] = compute(column.name, params, data['period'], tax_benefit_system)
+            data['values'][formula_name] = compute(simulation, column.name)
 
     except Exception as error:
         if isinstance(error.args[0], dict):  # we raised it ourselves, in this controller
@@ -199,8 +201,7 @@ def respond(req, version, data, params):
         )
 
 
-def compute(formula_name, params, period, tax_benefit_system):
-    simulation = create_simulation(params, period, tax_benefit_system)
+def compute(simulation, formula_name):
     resulting_dated_holder = simulation.compute(formula_name)
     return resulting_dated_holder.to_value_json()[0]  # only one person => unwrap the array
 
