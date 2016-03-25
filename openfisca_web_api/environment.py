@@ -29,18 +29,12 @@ app_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Initialized in load_environment.
 country_package_dir_path = None
-country_package_git_head_sha = None
+country_package_version = None
 cpu_count = None
-git_head_sha = None
 
 
 class ValueAndError(list):  # Can't be a tuple subclass, because WeakValueDictionary doesn't work with (sub)tuples.
     pass
-
-
-def get_git_head_sha(cwd = os.path.dirname(__file__)):
-    output = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'], cwd=cwd)
-    return output.rstrip('\n')
 
 
 def get_relative_file_path(absolute_file_path, base_path):
@@ -172,12 +166,6 @@ def load_environment(global_conf, app_conf):
 
     global country_package_version
     country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
-
-    # Store Git last commit SHA
-    global git_head_sha
-    git_head_sha = get_git_head_sha()
-    global country_package_git_head_sha
-    country_package_git_head_sha = get_git_head_sha(cwd = country_package.__path__[0])
 
     # Cache legislation JSON with references to original XML
     legislation_json_with_references_to_xml = tax_benefit_system.get_legislation_json(with_source_file_infos = True)

@@ -83,7 +83,6 @@ def api1_variables(req):
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiVersion = environment.country_package_version,
-            country_package_git_head_sha = environment.country_package_git_head_sha,
             method = req.script_name,
             url = req.url.decode('utf-8'),
             variables = variables_json,
