@@ -63,5 +63,6 @@ setup(
         ('**.py', 'python', None),
         ]},
     packages = find_packages(exclude=['openfisca_web_api.tests*']),
+    package_data={'openfisca_web_api': ['resources/*.*']},
     test_suite = 'nose.collector',
     )
