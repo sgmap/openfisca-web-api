@@ -42,9 +42,6 @@ setup(
         'paste.app_factory': 'main = openfisca_web_api.application:make_app',
         },
     extras_require = {
-        'dev': [
-            'PasteScript',
-            ],
         'france': [
             'OpenFisca-France >= 0.5.1',
             ],
@@ -58,7 +55,7 @@ setup(
         'numpy >= 1.6',
         'OpenFisca-Core >= 0.5.0',
         'OpenFisca-Parsers >= 0.5',
-        'PasteDeploy',
+        'PasteScript',
         'WebError >= 0.10',
         'WebOb >= 1.1',
         ],
