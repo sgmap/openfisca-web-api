@@ -165,7 +165,7 @@ def load_environment(global_conf, app_conf):
     country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
 
     global country_package_version
-    country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
+    country_package_version = pkg_resources.get_distribution(conf["country_package"]).version.split('.')[0]
 
     # Cache legislation JSON with references to original XML
     legislation_json_with_references_to_xml = tax_benefit_system.get_legislation_json(with_source_file_infos = True)
