@@ -170,6 +170,9 @@ def load_environment(global_conf, app_conf):
     global country_package_dir_path
     country_package_dir_path = pkg_resources.get_distribution(conf['country_package']).location
 
+    global country_package_version
+    country_package_version = pkg_resources.get_distribution(conf["country_package"]).version
+
     # Store Git last commit SHA
     global git_head_sha
     git_head_sha = get_git_head_sha()

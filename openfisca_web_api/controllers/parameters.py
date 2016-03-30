@@ -54,7 +54,7 @@ def api1_parameters(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
+                apiVersion = environment.country_package_version,
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
                     errors = [conv.jsonify_value(errors)],
@@ -100,7 +100,7 @@ def api1_parameters(req):
             parameters_json.append(parameter_json)
 
     response_dict = dict(
-        apiVersion = 1,
+        apiVersion = environment.country_package_version,
         country_package_git_head_sha = environment.country_package_git_head_sha,
         method = req.script_name,
         parameters = parameters_json,

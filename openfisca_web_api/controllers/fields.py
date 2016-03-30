@@ -7,7 +7,7 @@
 import collections
 import copy
 
-from .. import contexts, conv, model, wsgihelpers
+from .. import contexts, conv, environment, model, wsgihelpers
 
 
 def get_column_json(column):
@@ -37,7 +37,7 @@ def api1_fields(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
+                apiVersion = environment.country_package_version,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
@@ -78,7 +78,7 @@ def api1_fields(req):
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
             apiStatus = u'deprecated',
-            apiVersion = 1,
+            apiVersion = environment.country_package_version,
             columns = columns,
             columns_tree = columns_tree,
             context = data['context'],

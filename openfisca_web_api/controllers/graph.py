@@ -9,7 +9,7 @@ import datetime
 
 from openfisca_core import periods, simulations
 
-from .. import contexts, conv, model, wsgihelpers
+from .. import contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
@@ -29,7 +29,7 @@ def api1_graph(req):
     if model.input_variables_extractor is None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
+                apiVersion = environment.country_package_version,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 501,
@@ -76,7 +76,7 @@ def api1_graph(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
+                apiVersion = environment.country_package_version,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
@@ -107,7 +107,7 @@ def api1_graph(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
+            apiVersion = environment.country_package_version,
             context = data['context'],
             edges = edges,
             method = req.script_name,

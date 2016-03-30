@@ -11,7 +11,7 @@ import urlparse
 from biryani import strings
 import webob
 
-from . import contexts, wsgihelpers
+from . import contexts, environment, wsgihelpers
 
 
 application_url = None  # Set to req.application_url as soon as application is called.
@@ -81,7 +81,7 @@ def make_router(*routings):
             headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
             return wsgihelpers.respond_json(ctx,
                 dict(
-                    apiVersion = 1,
+                    apiVersion = environment.country_package_version,
                     error = dict(
                         code = 400,  # Bad Request
                         message = ctx._(u"Invalid path: {0}").format(req.path_info),
@@ -97,7 +97,7 @@ def make_router(*routings):
                     headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
                     return wsgihelpers.respond_json(ctx,
                         dict(
-                            apiVersion = 1,
+                            apiVersion = environment.country_package_version,
                             error = dict(
                                 code = 405,
                                 message = ctx._(u"You cannot use HTTP {} to access this URL. Use one of {}.").format(
@@ -117,7 +117,7 @@ def make_router(*routings):
         headers = wsgihelpers.handle_cross_origin_resource_sharing(ctx)
         return wsgihelpers.respond_json(ctx,
             dict(
-                apiVersion = 1,
+                apiVersion = environment.country_package_version,
                 error = dict(
                     code = 404,  # Not Found
                     message = ctx._(u"Path not found: {0}").format(req.path_info),

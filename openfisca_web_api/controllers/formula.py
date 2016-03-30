@@ -9,15 +9,13 @@ from datetime import datetime
 import numpy as np
 from openfisca_core import periods, simulations
 
-from .. import contexts, conv, model, wsgihelpers
+from .. import contexts, conv, environment, model, wsgihelpers
 
 
 @wsgihelpers.wsgify
 def api1_formula(req):
-    API_VERSION = 1
     params = dict(req.GET)
     data = dict()
-
     try:
         period = parse_period(params.pop('period', None))
         params = normalize(params)
@@ -27,7 +25,7 @@ def api1_formula(req):
     except Exception as error:
         data['error'] = error.args[0]
     finally:
-        return respond(req, API_VERSION, data, params)
+        return respond(req, environment.country_package_version, data, params)
 
 
 @wsgihelpers.wsgify
@@ -57,7 +55,6 @@ If used within the browser, make sure the resulting URL is kept
 for cross-browser compatibility, by splitting combined requests.
 On a server, just test what your library handles.
 """
-    API_VERSION = '2.1.0'
     params = dict(req.GET)
     data = dict()
 
@@ -85,7 +82,7 @@ On a server, just test what your library handles.
 
         data['error'] = error
     finally:
-        return respond(req, API_VERSION, data, params)
+        return respond(req, environment.country_package_version, data, params)
 
 
 def get_column_from_formula_name(formula_name):

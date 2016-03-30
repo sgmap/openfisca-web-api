@@ -6,7 +6,7 @@
 
 import collections
 
-from .. import contexts, conv, model, wsgihelpers
+from .. import contexts, conv, environment, model, wsgihelpers
 
 
 def build_entity_data(entity_class):
@@ -50,7 +50,7 @@ def api1_entities(req):
     if errors is not None:
         return wsgihelpers.respond_json(ctx,
             collections.OrderedDict(sorted(dict(
-                apiVersion = 1,
+                apiVersion = environment.country_package_version,
                 context = inputs.get('context'),
                 error = collections.OrderedDict(sorted(dict(
                     code = 400,  # Bad Request
@@ -78,7 +78,7 @@ def api1_entities(req):
 
     return wsgihelpers.respond_json(ctx,
         collections.OrderedDict(sorted(dict(
-            apiVersion = 1,
+            apiVersion = environment.country_package_version,
             context = data['context'],
             entities = collections.OrderedDict(sorted(entities.iteritems())),
             method = req.script_name,
